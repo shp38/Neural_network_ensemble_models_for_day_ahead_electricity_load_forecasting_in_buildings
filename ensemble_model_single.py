@@ -46,7 +46,7 @@ class ensemble_model_single:
         for i in u_time_labels:
             data_label_i = dataframe[dataframe['Timelabel'] == i]
             loads_label_i = data_label_i["Load"]
-            model_i = MLPRegressor(hidden_layer_sizes=[5,5], solver="sgd", activation="logistic", max_iter=1000, learning_rate='constant', learning_rate_init = 0.001).fit(
+            model_i = MLPRegressor(hidden_layer_sizes=[5], solver="sgd", activation="tanh", max_iter=1000, learning_rate='constant', learning_rate_init = 0.001).fit(
                 data_label_i.filter(items=["Timestamp", "Temperature", "Weekdays","Isweekend"]), loads_label_i.values)
             models[str(i)] = model_i
         return models
@@ -85,12 +85,12 @@ class ensemble_model_single:
         #     for i in range(0,48):
         #         data_label_i = dataframe.loc[dataframe['Timestamp'] == i]
         #         loads_label_i = data_label_i["Load"]
-        #         model_i = MLPRegressor(hidden_layer_sizes=[5], solver="sgd", activation="logistic", max_iter=500,
+        #         model_i = MLPRegressor(hidden_layer_sizes=[5], solver="sgd", activation="tanh", max_iter=500,
         #                                learning_rate='constant', learning_rate_init=0.001).fit(
         #             data_label_i.filter(items=["Timestamp", "Temperature", "Weekdays", "Isweekend"]),
         #             loads_label_i.values)
         #         models.append(model_i)
-        #     weekend_model = MLPRegressor(hidden_layer_sizes=[5], solver="sgd", activation="logistic", max_iter=500, learning_rate='constant', learning_rate_init = 0.001).fit(
+        #     weekend_model = MLPRegressor(hidden_layer_sizes=[5], solver="sgd", activation="tanh", max_iter=500, learning_rate='constant', learning_rate_init = 0.001).fit(
         #             dataframe_weekend.filter(items=["Timestamp", "Temperature", "Weekdays", "Isweekend"]), dataframe_weekend.filter(items=["Load"]))
         #     print(cluster_dataframe[label == 0]["Load"])
         #else:
@@ -101,24 +101,26 @@ class ensemble_model_single:
             data_label_i = dataframe[dataframe['Timelabel'] == i]
             loads_label_i = data_label_i["Load"]
             training_data = data_label_i.drop(["Load", "Label", 'Timelabel'], axis =1).values
-            model_i = MLPRegressor(hidden_layer_sizes=[5,5], solver="sgd", activation="logistic", max_iter=1000, learning_rate='constant', learning_rate_init = 0.0005).fit(
+            model_i = MLPRegressor(hidden_layer_sizes=[5], solver="sgd", activation="tanh", max_iter=1000, learning_rate='constant', learning_rate_init = 0.0005).fit(
                training_data , loads_label_i.values)
             models[str(i)] = model_i
         training_data_weekend = dataframe_weekend.drop(["Load"], axis = 1).values
-        weekend_model = MLPRegressor(hidden_layer_sizes=[5,5], solver="sgd", activation="logistic", max_iter=1000, learning_rate='constant', learning_rate_init = 0.0005).fit(
+        weekend_model = MLPRegressor(hidden_layer_sizes=[5], solver="sgd", activation="tanh", max_iter=1000, learning_rate='constant', learning_rate_init = 0.0005).fit(
             training_data_weekend , dataframe_weekend.filter(items=["Load"]))
 
 
         # for i in u_weekend_time_labels:
         #     weekend_data_label_i = dataframe_weekend[dataframe_weekend['Timelabel'] == i]
         #     weekend_loads_label_i = weekend_data_label_i["Load"]
-        #     weekend_model_i = MLPRegressor(hidden_layer_sizes=[5,5], solver="sgd", activation="logistic", max_iter=1000, learning_rate='constant', learning_rate_init = 0.001).fit(
+        #     weekend_model_i = MLPRegressor(hidden_layer_sizes=[5], solver="sgd", activation="tanh", max_iter=1000, learning_rate='constant', learning_rate_init = 0.001).fit(
         #         weekend_data_label_i.filter(items=["Timestamp", "Temperature", "Weekdays", "Isweekend"]), weekend_loads_label_i.values)
         #     weekend_models[str(i)] = weekend_model_i
-        # for i in u_time_labels:
+        # for i in u_labels:
         #     plt.scatter(cluster_dataframe[label == i]["Timestamp"], cluster_dataframe[label == i]["Load"], label=i)
         # #plt.plot(dataframe['Timestamp'], dataframe['Temperature'], label="Temperature")
         # plt.legend()
+        # plt.ylabel("Load, MWh, scaled (Divided by 75)")
+        # plt.xlabel("Time of day, in half-hourly increments.")
         # plt.show()
 
         self.model = models
@@ -152,6 +154,6 @@ class ensemble_model_single:
         # plt.show()
 
         MAPE = mean_absolute_percentage_error(test_data['Load'], prediction)
-        print(MAPE)
+        #print(MAPE)
 
         return prediction, MAPE

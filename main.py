@@ -9,6 +9,7 @@ from ensemble_model_historical_single import ensemble_model_historical_single
 from ensemble_model_multi import ensemble_model_multi
 from ensemble_model_historical_multi import ensemble_model_historical_multi
 from sklearn.metrics import mean_absolute_percentage_error
+import warnings
 
 
 from tslearn.clustering import TimeSeriesKMeans
@@ -216,7 +217,7 @@ def preprocess_data(load_data_folder, weather_data_file, meter):
     # load_data['Timestamp'] = timestamps
     # print(annex_load_data)
 
-    data = np.column_stack([timestamps, temp_interpolated, time, weekdays, isweekend, load_data.values])
+    data = np.column_stack([timestamps, temp_interpolated, time, weekdays, isweekend, load_data.values/75])
     test_data = data[-1008:-672]
     data = data[:-1008]
     previous_load_test_data_1_day = previous_load_data_1_day[-1008:-672]
@@ -233,189 +234,375 @@ def preprocess_data(load_data_folder, weather_data_file, meter):
     previous_load_data_5_days = previous_load_data_5_days[:-1008]
     previous_load_data_6_days = previous_load_data_6_days[:-1008]
     previous_load_data_7_days = previous_load_data_7_days[:-1008]
+
     plt.plot(time[:-672], load_data[:-672])
-    plt.show()
+    title = meter + " Load Data"
+    path = "Saved_figures/meter_load_data/" + title.replace(" ", "_")
+    plt.ylabel("Load (kWh")
+    plt.xlabel("Time (hours)")
+    plt.title(title)
+    plt.savefig(path)
+    plt.clf()
     previous_load_test_data = [previous_load_test_data_1_day,previous_load_test_data_2_days,previous_load_test_data_3_days,previous_load_test_data_4_days,previous_load_test_data_5_days,previous_load_test_data_6_days,previous_load_test_data_7_days]
     previous_load_data = [previous_load_data_1_day, previous_load_data_2_days, previous_load_data_3_days, previous_load_data_4_days,previous_load_data_5_days,previous_load_data_6_days,previous_load_data_7_days]
 
     return data, test_data, load_data, previous_load_data, previous_load_test_data
 
+def preprocess_ecc_main_data():
+    file = "C:/Users/sebpo/OneDrive/Desktop/University Work/FYP/load_data_directory/OSCE EMLite Single/OSCE ECC Main/ecc-main-forseb.csv"
+    weather_data_file = "C:/Users/sebpo/OneDrive/Desktop/University Work/FYP/Historical Weather Data/weather_data.csv"
+
+    weather_data = pd.read_csv(weather_data_file)
+    weather_data = weather_data[1342:4918]  # Extract the range of dates that interest us
+    temp_data = weather_data['tempC'].values
+    temp_interpolated = []
+    for i in range(len(temp_data)):
+        temp_interpolated.append(temp_data[i])
+        if i < len(temp_data) - 1:
+            temp_interpolated.append((temp_data[i] + temp_data[i + 1]) / 2)
+        else:
+            temp_interpolated.append(temp_data[i])
+
+    load_data = pd.read_csv(file)
+    load_data = load_data.dropna()
+
+    previous_load_data_1_day = load_data['IMPORT'][288:-48].values
+    previous_load_data_2_days = load_data['IMPORT'][240:-96].values
+    previous_load_data_3_days = load_data['IMPORT'][192:-144].values
+    previous_load_data_4_days = load_data['IMPORT'][144:-192].values
+    previous_load_data_5_days = load_data['IMPORT'][96:-240].values
+    previous_load_data_6_days = load_data['IMPORT'][48:-288].values
+    previous_load_data_7_days = load_data['IMPORT'][:-336].values
+    load_data = load_data[336:]
+    load_data = load_data.reset_index()
+
+    load_data['END'] = pd.to_datetime(load_data['END'], format="%d/%m/%Y %H:%M")
+    weekdays = load_data['END'].dt.dayofweek
+    weekdays = weekdays.values
+    dates = load_data['END'].values
+    timestamps = np.remainder(load_data.index, 48)
+    time = ((load_data.index) / 2)
+    cal = EnglandAndWalesHolidayCalendar()
+    dr = pd.date_range(start='2020-10-15', end='2021-03-12')
+    winter_holidays = pd.date_range(start='2020-12-25', end='2021-01-01')
+
+    holidays = cal.holidays(start=dr.min(), end=dr.max())
+    isweekend = []
+    for i in range(len(weekdays)):
+        if weekdays[i] == 5 or weekdays[i] == 6 or dates[i] in holidays or dates[i] in winter_holidays:
+            isweekend.append(1)
+        else:
+            isweekend.append(0)
+
+    data = np.column_stack([timestamps, temp_interpolated, time, weekdays, isweekend, load_data['IMPORT'].values/0.075])
+    test_data = data[-1008:-672]
+    data = data[:-1008]
+
+
+    previous_load_test_data_1_day = previous_load_data_1_day[-1008:-672]
+    previous_load_test_data_2_days = previous_load_data_2_days[-1008:-672]
+    previous_load_test_data_3_days = previous_load_data_3_days[-1008:-672]
+    previous_load_test_data_4_days = previous_load_data_4_days[-1008:-672]
+    previous_load_test_data_5_days = previous_load_data_5_days[-1008:-672]
+    previous_load_test_data_6_days = previous_load_data_6_days[-1008:-672]
+    previous_load_test_data_7_days = previous_load_data_7_days[-1008:-672]
+    previous_load_data_1_day = previous_load_data_1_day[:-1008]
+    previous_load_data_2_days = previous_load_data_2_days[:-1008]
+    previous_load_data_3_days = previous_load_data_3_days[:-1008]
+    previous_load_data_4_days = previous_load_data_4_days[:-1008]
+    previous_load_data_5_days = previous_load_data_5_days[:-1008]
+    previous_load_data_6_days = previous_load_data_6_days[:-1008]
+    previous_load_data_7_days = previous_load_data_7_days[:-1008]
+
+    plt.plot(time[:-672], load_data['IMPORT'][:-672].values/0.001)
+    title = meter + " Load Data"
+    path = "Saved_figures/meter_load_data/" + title.replace(" ", "_")
+    plt.ylabel("Load (kWh)")
+    plt.xlabel("Time (hours)")
+    plt.title(title)
+    plt.savefig(path)
+    plt.clf()
+    previous_load_test_data = [previous_load_test_data_1_day, previous_load_test_data_2_days,
+                               previous_load_test_data_3_days, previous_load_test_data_4_days,
+                               previous_load_test_data_5_days, previous_load_test_data_6_days,
+                               previous_load_test_data_7_days]
+    previous_load_data = [previous_load_data_1_day, previous_load_data_2_days, previous_load_data_3_days,
+                          previous_load_data_4_days, previous_load_data_5_days, previous_load_data_6_days,
+                          previous_load_data_7_days]
+
+    return data, test_data, load_data['IMPORT']/0.001, previous_load_data, previous_load_test_data   #multiply by 1000 to match units of other meters
+
+
 if __name__ == '__main__':
+    warnings.filterwarnings("ignore")
     weather_data_file = "C:/Users/sebpo/OneDrive/Desktop/University Work/FYP/Historical Weather Data/weather_data.csv"
     load_data_folder = "C:/Users/sebpo/OneDrive/Desktop/University Work/FYP/load_data_directory/OSCE EMLite Single/"
-    meters = [ "OSCE ECC Cafe", "OSCE Annex Pwr","OSCE ECC EHeat"]
+    meters = [  "OSCE ECC Main", "OSCE ECC Cafe", "OSCE Annex Pwr", "OSCE ECC EHeat"] #
     agregate_load_data = np.zeros(7152,)
     agregate_load_data = pd.Series(agregate_load_data)
+    agregate_load_historical_data = np.zeros([6144, 7])
+    agregate_load_historical_test_data = np.zeros([336,7])
 
     prediction_sum = pd.Series(np.zeros(336,))
-    prediction_sum_hist = pd.Series(np.zeros(336,))
+    prediction_sum_multi = pd.Series(np.zeros(336, ))
+    prediction_sum_hist = pd.Series(np.zeros(336, ))
+    prediction_sum_hist_multi = pd.Series(np.zeros(336, ))
 
     for meter in meters:
 
         # #print(data)
         #
+        if meter != "OSCE ECC Main":
+            data, test_data, load_data_meter_i, previous_days_load_data, previous_days_load_test_data = preprocess_data(load_data_folder, weather_data_file, meter)
+        else:
+            data, test_data, load_data_meter_i, previous_days_load_data, previous_days_load_test_data = preprocess_ecc_main_data()
 
-        data, test_data, load_data_meter_i, previous_days_load_data, previous_days_load_test_data = preprocess_data(load_data_folder, weather_data_file, meter)
+
         agregate_load_data = agregate_load_data + load_data_meter_i
-        hist_forecaster, n_clusters_optimal_hist, MAPEs_hist = historical_cluster_parametrisation_multi(data, test_data, previous_days_load_data, previous_days_load_test_data)
+        agregate_load_historical_data_meter_i = np.array(previous_days_load_data).reshape(6144,7)
+        agregate_load_historical_data = np.add(agregate_load_historical_data_meter_i, agregate_load_historical_data)
+        agregate_load_historical_test_data_meter_i = np.array(previous_days_load_test_data).reshape(336,7)
+        agregate_load_historical_test_data = np.add(agregate_load_historical_test_data_meter_i, agregate_load_historical_test_data)
+
+        hist_forecaster, n_clusters_optimal_hist_single, MAPEs_hist_single = historical_cluster_parametrisation_single(data, test_data, previous_days_load_data, previous_days_load_test_data)
+        hist_forecaster_multi, n_clusters_optimal_hist_multi, MAPEs_hist_multi = historical_cluster_parametrisation_multi(data, test_data, previous_days_load_data, previous_days_load_test_data)
         forecaster, n_clusters_optimal, MAPEs = cluster_parametrisation_single(data, test_data)
+        forecaster_multi, n_clusters_optimal_multi, MAPEs_multi = cluster_parametrisation_multi(data, test_data)
+
         n_clusters = range(1,49,3)
+
+        print(meter + " Model 1 optimal number of clusters: ",n_clusters_optimal)
+        print(meter + " Model 1 best MAPE: ",min(MAPEs))
         plt.plot(n_clusters, MAPEs)
-        plt.show()
-        plt.plot(n_clusters, MAPEs_hist)
-        plt.show()
+        title = meter + " Model 1 MAPE"
+        path = "Saved_figures/meter_MAPEs/" + title.replace(" ", "_")
+        plt.ylabel("MAPE")
+        plt.xlabel("Number of Clusters")
+        plt.title(title)
+        plt.savefig(path)
+        plt.clf()
+
+        print(meter + " Model 2 optimal number of clusters: ", n_clusters_optimal_multi)
+        print(meter + " Model 2 best MAPE: ", min(MAPEs_multi))
+        plt.plot(n_clusters, MAPEs_multi)
+        title = meter + " Model 2 MAPE"
+        path = "Saved_figures/meter_MAPEs/" + title.replace(" ", "_")
+        plt.ylabel("MAPE")
+        plt.xlabel("Number of Clusters")
+        plt.title(title)
+        plt.savefig(path)
+        plt.clf()
+
+        print(meter + " Model 3 optimal number of clusters: ", n_clusters_optimal_hist_single)
+        print(meter + " Model 3 best MAPE:", min(MAPEs_hist_single))
+        plt.plot(n_clusters, MAPEs_hist_single)
+        title = meter + " Model 3 MAPE"
+        path = "Saved_figures/meter_MAPEs/" + title.replace(" ", "_")
+        plt.ylabel("MAPE")
+        plt.xlabel("Number of Clusters")
+        plt.title(title)
+        plt.savefig(path)
+        plt.clf()
+
+        print(meter + " Model 4 optimal number of clusters: ", n_clusters_optimal_hist_multi)
+        print(meter + " Model 4 best MAPE:", min(MAPEs_hist_multi))
+        plt.plot(n_clusters, MAPEs_hist_multi)
+        title = meter + " Model 4 MAPE"
+        path = "Saved_figures/meter_MAPEs/" + title.replace(" ", "_")
+        plt.ylabel("MAPE")
+        plt.xlabel("Number of Clusters")
+        plt.title(title)
+        plt.savefig(path)
+        plt.clf()
         #test_data = pd.DataFrame(test_data, columns=["Timestamp", "Temperature","Time", "Weekdays", "Isweekend", "Load"])
-        print(n_clusters_optimal)
+        #print(n_clusters_optimal)
         #prediction_meter_i, MAPE = forecaster.predict(test_data, previous_days_load_test_data)
+
+
         prediction_meter_i, MAPE = forecaster.predict(test_data)
         prediction_meter_i = pd.Series(prediction_meter_i)
         prediction_sum += prediction_meter_i
 
-        prediction_meter_i_hist, MAPE_hist = forecaster.predict(test_data)
+        prediction_meter_i_multi, MAPE_multi = forecaster_multi.predict(test_data)
+        prediction_meter_i_multi = pd.Series(prediction_meter_i_multi)
+        prediction_sum_multi += prediction_meter_i_multi
+
+        prediction_meter_i_hist, MAPE_hist = hist_forecaster.predict(test_data, previous_days_load_test_data)
         prediction_meter_i_hist = pd.Series(prediction_meter_i_hist)
         prediction_sum_hist += prediction_meter_i_hist
 
+        prediction_meter_i_hist_multi, MAPE_hist_multi = hist_forecaster_multi.predict(test_data, previous_days_load_test_data)
+        prediction_meter_i_hist_multi = pd.Series(prediction_meter_i_hist_multi)
+        prediction_sum_hist_multi += prediction_meter_i_hist_multi
 
-    agregate_load_test_data = agregate_load_data[-1008:-672]
-    agregate_load_data = agregate_load_data[:-1008]
-    data[:,-1] = agregate_load_data.values
-    test_data[:,-1] = agregate_load_test_data.values
+
+    agregate_load_test_data = agregate_load_data[-1008:-672]/75
+    agregate_load_data = agregate_load_data[:-1008]/75
+    previous_days_load_test_data = np.array(agregate_load_historical_test_data).reshape(7,336)
+    previous_days_load_data = np.array(agregate_load_historical_data).reshape(7, 6144)
+    data[:,-1] = agregate_load_data
+    test_data[:,-1] = agregate_load_test_data
+
     forecaster, n_clusters_optimal, MAPEs = cluster_parametrisation_single(data, test_data)
-    forecaster_hist, n_clusters_optimal_hist, MAPEs_hist = historical_cluster_parametrisation_multi(data, test_data, previous_days_load_data, previous_days_load_test_data)
+    forecaster_multi, n_clusters_optimal_multi, MAPEs_multi = cluster_parametrisation_multi(data, test_data)
+    forecaster_hist, n_clusters_optimal_hist, MAPEs_hist = historical_cluster_parametrisation_single(data, test_data, previous_days_load_data, previous_days_load_test_data)
+    forecaster_hist_multi, n_clusters_optimal_hist_multi, MAPEs_hist_multi = historical_cluster_parametrisation_multi(data, test_data, previous_days_load_data, previous_days_load_test_data)
+
     n_clusters = range(1, 49, 3)
+
     plt.plot(n_clusters, MAPEs)
-    plt.show()
+    title = "ECC and Nursery MAPE Model 1"
+    path = "Saved_figures/ECC_Nursery_MAPEs/" + title.replace(" ", "_")
+    plt.ylabel("MAPE")
+    plt.xlabel("Number of clusters")
+    plt.title(title)
+    plt.savefig(path)
+    plt.clf()
+
+    plt.plot(n_clusters, MAPEs_multi)
+    title = "ECC and Nursery MAPE Model 2"
+    path = "Saved_figures/ECC_Nursery_MAPEs/" + title.replace(" ", "_")
+    plt.ylabel("MAPE")
+    plt.xlabel("Number of clusters")
+    plt.title(title)
+    plt.savefig(path)
+    plt.clf()
+
     plt.plot(n_clusters, MAPEs_hist)
-    plt.show()
+    title = "ECC and Nursery Agregate MAPE Model 3"
+    path = "Saved_figures/ECC_Nursery_MAPEs/" + title.replace(" ", "_")
+    plt.ylabel("MAPE")
+    plt.xlabel("Number of clusters")
+    plt.title(title)
+    plt.savefig(path)
+    plt.clf()
+
+    plt.plot(n_clusters, MAPEs_hist_multi)
+    title = "ECC and Nursery Agregate MAPE Model 4"
+    path = "Saved_figures/ECC_Nursery_MAPEs/" + title.replace(" ", "_")
+    plt.ylabel("MAPE")
+    plt.xlabel("Number of clusters")
+    plt.title(title)
+    plt.savefig(path)
+    plt.clf()
+
+    #Agregate forecast plots
+
     test_data = pd.DataFrame(test_data, columns=["Timestamp", "Temperature", "Time", "Weekdays", "Isweekend", "Load"])
-    print(n_clusters_optimal)
+
+    #Model 1
+    print("Agregate Model 1 optimal number of clusters: ",n_clusters_optimal)
     prediction, MAPE = forecaster.predict(test_data)
-    print("Agregate MAPE: ",MAPE)
+    print("Agregate Model 1 MAPE: ",MAPE)
     plt.plot(test_data['Time'], test_data['Load'], label="Actual")
     plt.plot(test_data['Time'], prediction, label="Predicted")
     plt.legend()
-    plt.title("Agregate Prediction(Multiple clusters at weekends)")
-    plt.show()
+    title = "Agregate Forecast Model 1"
+    path = "Saved_figures/ECC_Nursery_forecasts/" + title.replace(" ", "_")
+    plt.ylabel("Load (kWh, scaled down by a factor of 75)")
+    plt.xlabel("Time (hours)")
+    plt.title(title)
+    plt.savefig(path)
+    plt.clf()
 
-    print(n_clusters_optimal_hist)
-    prediction, MAPE = forecaster_hist.predict(test_data,previous_days_load_test_data)
-    print("Agregate MAPE: ", MAPE)
+    #Model 2
+    print("Agregate Model 2 optimal number of clusters: ", n_clusters_optimal_multi)
+    prediction, MAPE = forecaster_multi.predict(test_data)
+    print("Agregate Model 2 MAPE: ", MAPE)
     plt.plot(test_data['Time'], test_data['Load'], label="Actual")
     plt.plot(test_data['Time'], prediction, label="Predicted")
     plt.legend()
-    plt.title("Agregate Prediction(Multiple clusters at weekends)")
-    plt.show()
+    title = "Agregate Forecast Model 2"
+    path = "Saved_figures/ECC_Nursery_forecasts/" + title.replace(" ", "_")
+    plt.ylabel("Load (kWh, scaled down by a factor of 75)")
+    plt.xlabel("Time (hours)")
+    plt.title(title)
+    plt.savefig(path)
+    plt.clf()
 
-    # plt.plot(test_data['Time'], test_data['Load'], label="Actual")
-    # plt.plot(test_data['Time'], prediction_sum, label="Predicted")
-    # MAPE = mean_absolute_percentage_error(test_data['Load'], prediction_sum)
-    # print("Sum MAPE: ", MAPE)
-    # plt.legend()
-    # plt.title("Sum of individual Meter Predictions")
-    # plt.show()
+    # Model 3
+    print("Agregate Model 3 optimal number of clusters: ", n_clusters_optimal_hist)
+    prediction, MAPE = forecaster_hist.predict(test_data, previous_days_load_test_data)
+    print("Agregate Model 3 MAPE: ", MAPE)
+    plt.plot(test_data['Time'], test_data['Load'], label="Actual")
+    plt.plot(test_data['Time'], prediction, label="Predicted")
+    plt.legend()
+    title = "Agregate Forecast Model 3"
+    path = "Saved_figures/ECC_Nursery_forecasts/" + title.replace(" ", "_")
+    plt.ylabel("Load (kWh, scaled down by a factor of 75)")
+    plt.xlabel("Time (hours)")
+    plt.title(title)
+    plt.savefig(path)
+    plt.clf()
 
+    #Model 4
 
-    # prediction, MAPE = hist_forecaster.predict(test_data, previous_days_load_test_data)
-    # print("Agregate MAPE(with historical data input): ", MAPE)
-    # plt.plot(test_data['Time'], test_data['Load'], label="Actual")
-    # plt.plot(test_data['Time'], prediction, label="Predicted")
-    # plt.legend()
-    # plt.title("Agregate Prediction(with historical data input)")
-    # plt.show()
+    print("Agregate Model 4 optimal number of clusters: ",n_clusters_optimal_hist_multi)
+    prediction, MAPE = forecaster_hist_multi.predict(test_data, previous_days_load_test_data)
+    print("Agregate Model 4 MAPE: ", MAPE)
+    plt.plot(test_data['Time'], test_data['Load'], label="Actual")
+    plt.plot(test_data['Time'], prediction, label="Predicted")
+    plt.legend()
+    title = "Agregate Forecast Model 4"
+    path = "Saved_figures/ECC_Nursery_forecasts/" + title.replace(" ", "_")
+    plt.ylabel("Load (kWh, scaled down by a factor of 75)")
+    plt.xlabel("Time (hours)")
+    plt.title(title)
+    plt.savefig(path)
+    plt.clf()
+
+    #Sum of forecast plots
+
     plt.plot(test_data['Time'], test_data['Load'], label="Actual")
     plt.plot(test_data['Time'], prediction_sum, label="Predicted")
     MAPE = mean_absolute_percentage_error(test_data['Load'], prediction_sum)
-    print("Sum MAPE(with single cluster at weekends): ", MAPE)
+    print("Sum MAPE Model 1: ", MAPE)
     plt.legend()
-    plt.title("Sum of individual Meter Predictions(with single cluster at weekends)")
-    plt.show()
+    title = "Sum of meter forecasts Model 1"
+    path = "Saved_figures/ECC_Nursery_forecasts/" + title.replace(" ", "_")
+    plt.ylabel("Load (kWh, scaled down by a factor of 75)")
+    plt.xlabel("Time (hours)")
+    plt.title(title)
+    plt.savefig(path)
+    plt.clf()
+
+    plt.plot(test_data['Time'], test_data['Load'], label="Actual")
+    plt.plot(test_data['Time'], prediction_sum_multi, label="Predicted")
+    MAPE = mean_absolute_percentage_error(test_data['Load'], prediction_sum_multi)
+    print("Sum hist MAPE Model 2: ", MAPE)
+    plt.legend()
+    title = "Sum of meter forecasts Model 2"
+    path = "Saved_figures/ECC_Nursery_forecasts/" + title.replace(" ", "_")
+    plt.ylabel("Load (kWh, scaled down by a factor of 75)")
+    plt.xlabel("Time (hours)")
+    plt.title(title)
+    plt.savefig(path)
+    plt.clf()
 
     plt.plot(test_data['Time'], test_data['Load'], label="Actual")
     plt.plot(test_data['Time'], prediction_sum_hist, label="Predicted")
     MAPE = mean_absolute_percentage_error(test_data['Load'], prediction_sum_hist)
-    print("Sum MAPE(with multiple clusters at weekends): ", MAPE)
+    print("Sum hist MAPE Model 3: ", MAPE)
     plt.legend()
-    plt.title("Sum of individual Meter Predictions(with multiple clusters at weekends)")
-    plt.show()
+    title = "Sum of meter forecasts Model 3"
+    path = "Saved_figures/ECC_Nursery_forecasts/" + title.replace(" ", "_")
+    plt.ylabel("Load (kWh, scaled down by a factor of 75)")
+    plt.xlabel("Time (hours)")
+    plt.title(title)
+    plt.savefig(path)
+    plt.clf()
+
+    plt.plot(test_data['Time'], test_data['Load'], label="Actual")
+    plt.plot(test_data['Time'], prediction_sum_hist_multi, label="Predicted")
+    MAPE = mean_absolute_percentage_error(test_data['Load'], prediction_sum_hist_multi)
+    print("Sum hist MAPE Model 4: ", MAPE)
+    plt.legend()
+    title = "Sum of meter forecasts Model 4"
+    path = "Saved_figures/ECC_Nursery_forecasts/" + title.replace(" ", "_")
+    plt.ylabel("Load (kWh, scaled down by a factor of 75)")
+    plt.xlabel("Time (hours)")
+    plt.title(title)
+    plt.savefig(path)
+    plt.clf()
 
 
-
-
-    # plt.plot(test_data[test_data["Isweekend"] == 1]['Time'], prediction_weekend, label="Predicted Weekend")
-
-
-
-    # for i in range(48):
-    #     #low = int(8*abs(np.sin(0.75*i)))
-    #     high = int(8 + 8*abs(np.sin(0.1*i)))
-    #     for j in range(0,140):
-    #         #y = np.random.randint(low=low, high=high)
-    #         y = np.random.normal() + high
-    #         temp = high - 5
-    #         datapoint = [i, temp, y]
-    #         data.append(datapoint)
-    #
-    #     y = np.random.normal() + high
-    #     temp = high - 5
-    #     datapoint = [i, temp, y]
-    #     test_data.append(datapoint)
-
-    #forecaster = ensemble_model_temp(5,data)
-    #prediction, MAPE = forecaster.predict(test_data)
-
-    # # Initialize the class object
-    # kmeans = KMeans(n_clusters=3)
-    # data.sort()
-    # # predict the labels of clusters.
-    # df = np.array(data)
-    # test_data = np.array(test_data)
-    # test_dataframe = pd.DataFrame(test_data, columns=["Timestamp", "Temperature", "Load"])
-    # label = kmeans.fit_predict(df)
-    # dataframe = pd.DataFrame(data, columns = ["Timestamp", "Temperature", "Load"])
-    # dataframe["Label"] = label
-    # #print(dataframe)
-    # means = []
-    #
-    # for i in range(48):
-    #     data_at_time_i = []
-    #     for j in range(0,29):
-    #         data_at_time_i.append([data[i*140+j][-2], data[i*140+j][-1]])
-    #     #print(data[i+j][-1])
-    #     means.append([i, np.median(data_at_time_i[-2]), np.median(data_at_time_i[-1])])
-    # #print(means)
-    # timelabels = kmeans.predict(means)
-    # #print(timelabels)
-    #
-    #
-    #
-    # # Getting unique labels
-    # u_labels = np.unique(label)
-    # u_labels.sort()
-    # models = []
-    # data_by_label = []
-    # #print(u_labels, type(u_labels))
-    # for i in u_labels:
-    #     data_label_i = dataframe.loc[dataframe['Label'] == i]
-    #     #time_stamps_label_i = [data_label_i.filter(items = "Timestamp").values, data_label_i.filter(items ="Temperature").values]
-    #     loads_label_i = data_label_i["Load"]
-    #     #print(time_stamps_label_i)
-    #     #print(loads_label_i)
-    #     model_i = MLPRegressor(hidden_layer_sizes=[10], solver="sgd", activation="logistic", max_iter=500).fit(data_label_i.filter(items = ["Timestamp", "Temperature"]), loads_label_i.values)
-    #     models.append(model_i)
-    #
-    # prediction = []
-    # for i in range(48):
-    #     label_i = timelabels[i]
-    #     print(label_i)
-    #     input_data = np.array([test_dataframe['Timestamp'][i], test_dataframe['Temperature'][i]])
-    #     prediction_i = models[label_i].predict(input_data.reshape(1, -1))
-    #     prediction.extend(prediction_i)
-    #
-    # prediction = np.array(prediction)
-    #print(prediction, np.size(prediction))
-    # plotting the results:
-
-    #print(test_dataframe['Timestamp'], np.size(test_dataframe['Timestamp']))
-
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
