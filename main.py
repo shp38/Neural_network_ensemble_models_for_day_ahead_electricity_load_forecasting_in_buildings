@@ -141,50 +141,52 @@ def preprocess_data(load_data_folder, weather_data_file, meter):
 
 
 
-    # timeseries_list = []
-    #
-    # for j in range(len(load_data)):
-    #     timeseries_i = []
-    #     timeseries = load_data[j].iloc[:, 1].tolist()
-    #     if j != 0:
-    #         load_previous = load_data[j - 1].iloc[-1, 1].tolist()
-    #     for i in range(len(timeseries)):
-    #         if i == 0:
-    #             if j == 0:
-    #                 load = timeseries[i + 1] - timeseries[i]
-    #             else:
-    #                 load = timeseries[i] - load_previous
-    #         else:
-    #             load = timeseries[i] - timeseries[i - 1]
-    #         timeseries_i.append([i, load])
-    #     timeseries_list.append(timeseries_i)
-    # timeseries_list = np.array(timeseries_list)
-    #
-    # X_train = timeseries_list
-    # # X_train = TimeSeriesScalerMeanVariance().fit_transform(timeseries_list)
-    # sz = X_train.shape[1]
-    # # Soft-DTW-k-means
-    # print("Soft-DTW k-means")
-    # sdtw_km = TimeSeriesKMeans(n_clusters=3,
-    #                            metric="softdtw",
-    #                            metric_params={"gamma": .01}
-    #                            )
-    # y_pred = sdtw_km.fit_predict(X_train)
-    #
-    # for yi in range(3):
-    #     plt.subplot(3, 3, 7 + yi)
-    #     for xx in X_train[y_pred == yi]:
-    #         plt.plot(xx.ravel(), "k-", alpha=.2)
-    #     plt.plot(sdtw_km.cluster_centers_[yi].ravel(), "r-")
-    #     plt.xlim(0, sz)
-    #     plt.ylim(0, 5000)
-    #     plt.text(0.55, 0.85, 'Cluster %d' % (yi + 1),
-    #              transform=plt.gca().transAxes)
-    #     if yi == 1:
-    #         plt.title("Soft-DTW $k$-means")
-    #
-    # plt.tight_layout()
-    # plt.show()
+    timeseries_list = []
+
+    for j in range(len(load_data)):
+        timeseries_i = []
+        timeseries = load_data[j].iloc[:, 1].tolist()
+        if j != 0:
+            load_previous = load_data[j - 1].iloc[-1, 1].tolist()
+        for i in range(len(timeseries)):
+            if i == 0:
+                if j == 0:
+                    load = timeseries[i + 1] - timeseries[i]
+                else:
+                    load = timeseries[i] - load_previous
+            else:
+                load = timeseries[i] - timeseries[i - 1]
+            timeseries_i.append([i, load])
+        timeseries_list.append(timeseries_i)
+    timeseries_list = np.array(timeseries_list)
+
+    X_train = timeseries_list
+    # X_train = TimeSeriesScalerMeanVariance().fit_transform(timeseries_list)
+    sz = X_train.shape[1]
+    # Soft-DTW-k-means
+    print("Soft-DTW k-means")
+    sdtw_km = TimeSeriesKMeans(n_clusters=2,
+                               metric="softdtw",
+                               metric_params={"gamma": .01}
+                               )
+    y_pred = sdtw_km.fit_predict(X_train)
+
+    for yi in range(2):
+        plt.subplot(1, 2, 1+yi)
+        for xx in X_train[y_pred == yi]:
+            plt.plot(xx.ravel(), "k-", alpha=.2)
+        plt.plot(sdtw_km.cluster_centers_[yi].ravel(), "r-")
+        plt.xlim(0, sz)
+        plt.ylim(0, 5000)
+        plt.xlabel("Time of day (half hourly increments)")
+        plt.ylabel("Load, kWh")
+        plt.text(0.55, 0.85, 'Cluster %d' % (yi + 1),
+                 transform=plt.gca().transAxes)
+
+    plt.suptitle("Soft-DTW $k$-means load timeseries clustering")
+
+    plt.tight_layout()
+    plt.show()
     load_data = pd.concat(load_data, ignore_index=True, sort=False)
     load_data['created_at'] = pd.to_datetime(load_data['created_at'], format="%Y-%m-%d %H:%M:%S%z")
     weekdays = load_data['created_at'].dt.dayofweek
@@ -605,4 +607,20 @@ if __name__ == '__main__':
     plt.savefig(path)
     plt.clf()
 
+    pred = np.array(prediction_sum_hist_multi)
+    load = test_data['Load'].to_numpy()
+    error = pred - load
+    avg_error = []
+    for i in range(48):
+        avg_error.append(np.mean([abs(error[i]), abs(error[i + 48]), abs(error[i + 48*2]), abs(error[i + 48*3]), abs(error[i + 48*4]), abs(error[i+48*5]), abs(error[i + 48*6])]))
+
+    plt.plot(range(0,48), avg_error, label = "Average Error, kWh/75")
+    plt.legend()
+    title = "Sum of meter forecasts Model 4 average absolute half-hourly error"
+    path = "Saved_figures/ECC_Nursery_forecasts/" + title.replace(" ", "_")
+    plt.ylabel("Load (kWh, scaled down by a factor of 75)")
+    plt.xlabel("Time (half hours)")
+    plt.title(title)
+    plt.savefig(path)
+    plt.show()
 
