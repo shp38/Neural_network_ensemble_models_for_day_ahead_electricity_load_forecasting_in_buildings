@@ -142,52 +142,53 @@ def preprocess_data(load_data_folder, weather_data_file, meter):
 
 
 
-    timeseries_list = []
+    # timeseries_list = []
+    #
+    # for j in range(len(load_data)):
+    #     timeseries_i = []
+    #     timeseries = load_data[j].iloc[:, 1].tolist()
+    #     if j != 0:
+    #         load_previous = load_data[j - 1].iloc[-1, 1].tolist()
+    #     for i in range(len(timeseries)):
+    #         if i == 0:
+    #             if j == 0:
+    #                 load = timeseries[i + 1] - timeseries[i]
+    #             else:
+    #                 load = timeseries[i] - load_previous
+    #         else:
+    #             load = timeseries[i] - timeseries[i - 1]
+    #         timeseries_i.append([i, load])
+    #     timeseries_list.append(timeseries_i)
+    # timeseries_list = np.array(timeseries_list)
+    #
+    # X_train = timeseries_list
+    # # X_train = TimeSeriesScalerMeanVariance().fit_transform(timeseries_list)
+    # sz = X_train.shape[1]
+    # # Soft-DTW-k-means
+    # print("Soft-DTW k-means")
+    # sdtw_km = TimeSeriesKMeans(n_clusters=2,
+    #                            metric="softdtw",
+    #                            metric_params={"gamma": .01}
+    #                            )
+    # y_pred = sdtw_km.fit_predict(X_train)
+    #
+    # for yi in range(2):
+    #     plt.subplot(1, 2, 1+yi)
+    #     for xx in X_train[y_pred == yi]:
+    #         plt.plot(xx.ravel(), "k-", alpha=.2)
+    #     plt.plot(sdtw_km.cluster_centers_[yi].ravel(), "r-")
+    #     plt.xlim(0, sz)
+    #     plt.ylim(0, 5000)
+    #     plt.xlabel("Time of day (half hourly increments)")
+    #     plt.ylabel("Load, kWh")
+    #     plt.text(0.55, 0.85, 'Cluster %d' % (yi + 1),
+    #              transform=plt.gca().transAxes)
+    #
+    # plt.suptitle("Soft-DTW $k$-means load timeseries clustering")
+    #
+    # plt.tight_layout()
+    # plt.show()
 
-    for j in range(len(load_data)):
-        timeseries_i = []
-        timeseries = load_data[j].iloc[:, 1].tolist()
-        if j != 0:
-            load_previous = load_data[j - 1].iloc[-1, 1].tolist()
-        for i in range(len(timeseries)):
-            if i == 0:
-                if j == 0:
-                    load = timeseries[i + 1] - timeseries[i]
-                else:
-                    load = timeseries[i] - load_previous
-            else:
-                load = timeseries[i] - timeseries[i - 1]
-            timeseries_i.append([i, load])
-        timeseries_list.append(timeseries_i)
-    timeseries_list = np.array(timeseries_list)
-
-    X_train = timeseries_list
-    # X_train = TimeSeriesScalerMeanVariance().fit_transform(timeseries_list)
-    sz = X_train.shape[1]
-    # Soft-DTW-k-means
-    print("Soft-DTW k-means")
-    sdtw_km = TimeSeriesKMeans(n_clusters=2,
-                               metric="softdtw",
-                               metric_params={"gamma": .01}
-                               )
-    y_pred = sdtw_km.fit_predict(X_train)
-
-    for yi in range(2):
-        plt.subplot(1, 2, 1+yi)
-        for xx in X_train[y_pred == yi]:
-            plt.plot(xx.ravel(), "k-", alpha=.2)
-        plt.plot(sdtw_km.cluster_centers_[yi].ravel(), "r-")
-        plt.xlim(0, sz)
-        plt.ylim(0, 5000)
-        plt.xlabel("Time of day (half hourly increments)")
-        plt.ylabel("Load, kWh")
-        plt.text(0.55, 0.85, 'Cluster %d' % (yi + 1),
-                 transform=plt.gca().transAxes)
-
-    plt.suptitle("Soft-DTW $k$-means load timeseries clustering")
-
-    plt.tight_layout()
-    plt.show()
     load_data = pd.concat(load_data, ignore_index=True, sort=False)
     load_data['created_at'] = pd.to_datetime(load_data['created_at'], format="%Y-%m-%d %H:%M:%S%z")
     weekdays = load_data['created_at'].dt.dayofweek
@@ -367,45 +368,45 @@ if __name__ == '__main__':
         agregate_load_historical_test_data_meter_i = np.array(previous_days_load_test_data).reshape(336,7)
         agregate_load_historical_test_data = np.add(agregate_load_historical_test_data_meter_i, agregate_load_historical_test_data)
 
-        hist_forecaster, n_clusters_optimal_hist_single, MAPEs_hist_single = historical_cluster_parametrisation_single(data, test_data, previous_days_load_data, previous_days_load_test_data)
+        #hist_forecaster, n_clusters_optimal_hist_single, MAPEs_hist_single = historical_cluster_parametrisation_single(data, test_data, previous_days_load_data, previous_days_load_test_data)
         hist_forecaster_multi, n_clusters_optimal_hist_multi, MAPEs_hist_multi = historical_cluster_parametrisation_multi(data, test_data, previous_days_load_data, previous_days_load_test_data)
-        forecaster, n_clusters_optimal, MAPEs = cluster_parametrisation_single(data, test_data)
-        forecaster_multi, n_clusters_optimal_multi, MAPEs_multi = cluster_parametrisation_multi(data, test_data)
+        #forecaster, n_clusters_optimal, MAPEs = cluster_parametrisation_single(data, test_data)
+        #forecaster_multi, n_clusters_optimal_multi, MAPEs_multi = cluster_parametrisation_multi(data, test_data)
 
         n_clusters = range(1,49,3)
 
-        print(meter + " Model 1 optimal number of clusters: ",n_clusters_optimal)
-        print(meter + " Model 1 best MAPE: ",min(MAPEs))
-        plt.plot(n_clusters, MAPEs)
-        title = meter + " Model 1 MAPE"
-        path = "Saved_figures/meter_MAPEs/" + title.replace(" ", "_")
-        plt.ylabel("MAPE")
-        plt.xlabel("Number of Clusters")
-        plt.title(title)
-        plt.savefig(path)
-        plt.clf()
-
-        print(meter + " Model 2 optimal number of clusters: ", n_clusters_optimal_multi)
-        print(meter + " Model 2 best MAPE: ", min(MAPEs_multi))
-        plt.plot(n_clusters, MAPEs_multi)
-        title = meter + " Model 2 MAPE"
-        path = "Saved_figures/meter_MAPEs/" + title.replace(" ", "_")
-        plt.ylabel("MAPE")
-        plt.xlabel("Number of Clusters")
-        plt.title(title)
-        plt.savefig(path)
-        plt.clf()
-
-        print(meter + " Model 3 optimal number of clusters: ", n_clusters_optimal_hist_single)
-        print(meter + " Model 3 best MAPE:", min(MAPEs_hist_single))
-        plt.plot(n_clusters, MAPEs_hist_single)
-        title = meter + " Model 3 MAPE"
-        path = "Saved_figures/meter_MAPEs/" + title.replace(" ", "_")
-        plt.ylabel("MAPE")
-        plt.xlabel("Number of Clusters")
-        plt.title(title)
-        plt.savefig(path)
-        plt.clf()
+        # print(meter + " Model 1 optimal number of clusters: ",n_clusters_optimal)
+        # print(meter + " Model 1 best MAPE: ",min(MAPEs))
+        # plt.plot(n_clusters, MAPEs)
+        # title = meter + " Model 1 MAPE"
+        # path = "Saved_figures/meter_MAPEs/" + title.replace(" ", "_")
+        # plt.ylabel("MAPE")
+        # plt.xlabel("Number of Clusters")
+        # plt.title(title)
+        # plt.savefig(path)
+        # plt.clf()
+        #
+        # print(meter + " Model 2 optimal number of clusters: ", n_clusters_optimal_multi)
+        # print(meter + " Model 2 best MAPE: ", min(MAPEs_multi))
+        # plt.plot(n_clusters, MAPEs_multi)
+        # title = meter + " Model 2 MAPE"
+        # path = "Saved_figures/meter_MAPEs/" + title.replace(" ", "_")
+        # plt.ylabel("MAPE")
+        # plt.xlabel("Number of Clusters")
+        # plt.title(title)
+        # plt.savefig(path)
+        # plt.clf()
+        #
+        # print(meter + " Model 3 optimal number of clusters: ", n_clusters_optimal_hist_single)
+        # print(meter + " Model 3 best MAPE:", min(MAPEs_hist_single))
+        # plt.plot(n_clusters, MAPEs_hist_single)
+        # title = meter + " Model 3 MAPE"
+        # path = "Saved_figures/meter_MAPEs/" + title.replace(" ", "_")
+        # plt.ylabel("MAPE")
+        # plt.xlabel("Number of Clusters")
+        # plt.title(title)
+        # plt.savefig(path)
+        # plt.clf()
 
         print(meter + " Model 4 optimal number of clusters: ", n_clusters_optimal_hist_multi)
         print(meter + " Model 4 best MAPE:", min(MAPEs_hist_multi))
@@ -422,17 +423,17 @@ if __name__ == '__main__':
         #prediction_meter_i, MAPE = forecaster.predict(test_data, previous_days_load_test_data)
 
 
-        prediction_meter_i, MAPE = forecaster.predict(test_data)
-        prediction_meter_i = pd.Series(prediction_meter_i)
-        prediction_sum += prediction_meter_i
-
-        prediction_meter_i_multi, MAPE_multi = forecaster_multi.predict(test_data)
-        prediction_meter_i_multi = pd.Series(prediction_meter_i_multi)
-        prediction_sum_multi += prediction_meter_i_multi
-
-        prediction_meter_i_hist, MAPE_hist = hist_forecaster.predict(test_data, previous_days_load_test_data)
-        prediction_meter_i_hist = pd.Series(prediction_meter_i_hist)
-        prediction_sum_hist += prediction_meter_i_hist
+        # prediction_meter_i, MAPE = forecaster.predict(test_data)
+        # prediction_meter_i = pd.Series(prediction_meter_i)
+        # prediction_sum += prediction_meter_i
+        #
+        # prediction_meter_i_multi, MAPE_multi = forecaster_multi.predict(test_data)
+        # prediction_meter_i_multi = pd.Series(prediction_meter_i_multi)
+        # prediction_sum_multi += prediction_meter_i_multi
+        #
+        # prediction_meter_i_hist, MAPE_hist = hist_forecaster.predict(test_data, previous_days_load_test_data)
+        # prediction_meter_i_hist = pd.Series(prediction_meter_i_hist)
+        # prediction_sum_hist += prediction_meter_i_hist
 
         prediction_meter_i_hist_multi, MAPE_hist_multi = hist_forecaster_multi.predict(test_data, previous_days_load_test_data)
         prediction_meter_i_hist_multi = pd.Series(prediction_meter_i_hist_multi)
@@ -446,39 +447,39 @@ if __name__ == '__main__':
     data[:,-1] = agregate_load_data
     test_data[:,-1] = agregate_load_test_data
 
-    forecaster, n_clusters_optimal, MAPEs = cluster_parametrisation_single(data, test_data)
-    forecaster_multi, n_clusters_optimal_multi, MAPEs_multi = cluster_parametrisation_multi(data, test_data)
-    forecaster_hist, n_clusters_optimal_hist, MAPEs_hist = historical_cluster_parametrisation_single(data, test_data, previous_days_load_data, previous_days_load_test_data)
+    # forecaster, n_clusters_optimal, MAPEs = cluster_parametrisation_single(data, test_data)
+    # forecaster_multi, n_clusters_optimal_multi, MAPEs_multi = cluster_parametrisation_multi(data, test_data)
+    # forecaster_hist, n_clusters_optimal_hist, MAPEs_hist = historical_cluster_parametrisation_single(data, test_data, previous_days_load_data, previous_days_load_test_data)
     forecaster_hist_multi, n_clusters_optimal_hist_multi, MAPEs_hist_multi = historical_cluster_parametrisation_multi(data, test_data, previous_days_load_data, previous_days_load_test_data)
 
     n_clusters = range(1, 49, 3)
 
-    plt.plot(n_clusters, MAPEs)
-    title = "ECC and Nursery MAPE Model 1"
-    path = "Saved_figures/ECC_Nursery_MAPEs/" + title.replace(" ", "_")
-    plt.ylabel("MAPE")
-    plt.xlabel("Number of clusters")
-    plt.title(title)
-    plt.savefig(path)
-    plt.clf()
-
-    plt.plot(n_clusters, MAPEs_multi)
-    title = "ECC and Nursery MAPE Model 2"
-    path = "Saved_figures/ECC_Nursery_MAPEs/" + title.replace(" ", "_")
-    plt.ylabel("MAPE")
-    plt.xlabel("Number of clusters")
-    plt.title(title)
-    plt.savefig(path)
-    plt.clf()
-
-    plt.plot(n_clusters, MAPEs_hist)
-    title = "ECC and Nursery Agregate MAPE Model 3"
-    path = "Saved_figures/ECC_Nursery_MAPEs/" + title.replace(" ", "_")
-    plt.ylabel("MAPE")
-    plt.xlabel("Number of clusters")
-    plt.title(title)
-    plt.savefig(path)
-    plt.clf()
+    # plt.plot(n_clusters, MAPEs)
+    # title = "ECC and Nursery MAPE Model 1"
+    # path = "Saved_figures/ECC_Nursery_MAPEs/" + title.replace(" ", "_")
+    # plt.ylabel("MAPE")
+    # plt.xlabel("Number of clusters")
+    # plt.title(title)
+    # plt.savefig(path)
+    # plt.clf()
+    #
+    # plt.plot(n_clusters, MAPEs_multi)
+    # title = "ECC and Nursery MAPE Model 2"
+    # path = "Saved_figures/ECC_Nursery_MAPEs/" + title.replace(" ", "_")
+    # plt.ylabel("MAPE")
+    # plt.xlabel("Number of clusters")
+    # plt.title(title)
+    # plt.savefig(path)
+    # plt.clf()
+    #
+    # plt.plot(n_clusters, MAPEs_hist)
+    # title = "ECC and Nursery Agregate MAPE Model 3"
+    # path = "Saved_figures/ECC_Nursery_MAPEs/" + title.replace(" ", "_")
+    # plt.ylabel("MAPE")
+    # plt.xlabel("Number of clusters")
+    # plt.title(title)
+    # plt.savefig(path)
+    # plt.clf()
 
     plt.plot(n_clusters, MAPEs_hist_multi)
     title = "ECC and Nursery Agregate MAPE Model 4"
@@ -493,50 +494,50 @@ if __name__ == '__main__':
 
     test_data = pd.DataFrame(test_data, columns=["Timestamp", "Temperature", "Time", "Weekdays", "Isweekend", "Load"])
 
-    #Model 1
-    print("Agregate Model 1 optimal number of clusters: ",n_clusters_optimal)
-    prediction, MAPE = forecaster.predict(test_data)
-    print("Agregate Model 1 MAPE: ",MAPE)
-    plt.plot(test_data['Time'], test_data['Load'], label="Actual")
-    plt.plot(test_data['Time'], prediction, label="Predicted")
-    plt.legend()
-    title = "Agregate Forecast Model 1"
-    path = "Saved_figures/ECC_Nursery_forecasts/" + title.replace(" ", "_")
-    plt.ylabel("Load (kWh, scaled down by a factor of 75)")
-    plt.xlabel("Time (hours)")
-    plt.title(title)
-    plt.savefig(path)
-    plt.clf()
-
-    #Model 2
-    print("Agregate Model 2 optimal number of clusters: ", n_clusters_optimal_multi)
-    prediction, MAPE = forecaster_multi.predict(test_data)
-    print("Agregate Model 2 MAPE: ", MAPE)
-    plt.plot(test_data['Time'], test_data['Load'], label="Actual")
-    plt.plot(test_data['Time'], prediction, label="Predicted")
-    plt.legend()
-    title = "Agregate Forecast Model 2"
-    path = "Saved_figures/ECC_Nursery_forecasts/" + title.replace(" ", "_")
-    plt.ylabel("Load (kWh, scaled down by a factor of 75)")
-    plt.xlabel("Time (hours)")
-    plt.title(title)
-    plt.savefig(path)
-    plt.clf()
-
-    # Model 3
-    print("Agregate Model 3 optimal number of clusters: ", n_clusters_optimal_hist)
-    prediction, MAPE = forecaster_hist.predict(test_data, previous_days_load_test_data)
-    print("Agregate Model 3 MAPE: ", MAPE)
-    plt.plot(test_data['Time'], test_data['Load'], label="Actual")
-    plt.plot(test_data['Time'], prediction, label="Predicted")
-    plt.legend()
-    title = "Agregate Forecast Model 3"
-    path = "Saved_figures/ECC_Nursery_forecasts/" + title.replace(" ", "_")
-    plt.ylabel("Load (kWh, scaled down by a factor of 75)")
-    plt.xlabel("Time (hours)")
-    plt.title(title)
-    plt.savefig(path)
-    plt.clf()
+    # #Model 1
+    # print("Agregate Model 1 optimal number of clusters: ",n_clusters_optimal)
+    # prediction, MAPE = forecaster.predict(test_data)
+    # print("Agregate Model 1 MAPE: ",MAPE)
+    # plt.plot(test_data['Time'], test_data['Load'], label="Actual")
+    # plt.plot(test_data['Time'], prediction, label="Predicted")
+    # plt.legend()
+    # title = "Agregate Forecast Model 1"
+    # path = "Saved_figures/ECC_Nursery_forecasts/" + title.replace(" ", "_")
+    # plt.ylabel("Load (kWh, scaled down by a factor of 75)")
+    # plt.xlabel("Time (hours)")
+    # plt.title(title)
+    # plt.savefig(path)
+    # plt.clf()
+    #
+    # #Model 2
+    # print("Agregate Model 2 optimal number of clusters: ", n_clusters_optimal_multi)
+    # prediction, MAPE = forecaster_multi.predict(test_data)
+    # print("Agregate Model 2 MAPE: ", MAPE)
+    # plt.plot(test_data['Time'], test_data['Load'], label="Actual")
+    # plt.plot(test_data['Time'], prediction, label="Predicted")
+    # plt.legend()
+    # title = "Agregate Forecast Model 2"
+    # path = "Saved_figures/ECC_Nursery_forecasts/" + title.replace(" ", "_")
+    # plt.ylabel("Load (kWh, scaled down by a factor of 75)")
+    # plt.xlabel("Time (hours)")
+    # plt.title(title)
+    # plt.savefig(path)
+    # plt.clf()
+    #
+    # # Model 3
+    # print("Agregate Model 3 optimal number of clusters: ", n_clusters_optimal_hist)
+    # prediction, MAPE = forecaster_hist.predict(test_data, previous_days_load_test_data)
+    # print("Agregate Model 3 MAPE: ", MAPE)
+    # plt.plot(test_data['Time'], test_data['Load'], label="Actual")
+    # plt.plot(test_data['Time'], prediction, label="Predicted")
+    # plt.legend()
+    # title = "Agregate Forecast Model 3"
+    # path = "Saved_figures/ECC_Nursery_forecasts/" + title.replace(" ", "_")
+    # plt.ylabel("Load (kWh, scaled down by a factor of 75)")
+    # plt.xlabel("Time (hours)")
+    # plt.title(title)
+    # plt.savefig(path)
+    # plt.clf()
 
     #Model 4
 
@@ -556,44 +557,44 @@ if __name__ == '__main__':
 
     #Sum of forecast plots
 
-    plt.plot(test_data['Time'], test_data['Load'], label="Actual")
-    plt.plot(test_data['Time'], prediction_sum, label="Predicted")
-    MAPE = mean_absolute_percentage_error(test_data['Load'], prediction_sum)
-    print("Sum MAPE Model 1: ", MAPE)
-    plt.legend()
-    title = "Sum of meter forecasts Model 1"
-    path = "Saved_figures/ECC_Nursery_forecasts/" + title.replace(" ", "_")
-    plt.ylabel("Load (kWh, scaled down by a factor of 75)")
-    plt.xlabel("Time (hours)")
-    plt.title(title)
-    plt.savefig(path)
-    plt.clf()
-
-    plt.plot(test_data['Time'], test_data['Load'], label="Actual")
-    plt.plot(test_data['Time'], prediction_sum_multi, label="Predicted")
-    MAPE = mean_absolute_percentage_error(test_data['Load'], prediction_sum_multi)
-    print("Sum hist MAPE Model 2: ", MAPE)
-    plt.legend()
-    title = "Sum of meter forecasts Model 2"
-    path = "Saved_figures/ECC_Nursery_forecasts/" + title.replace(" ", "_")
-    plt.ylabel("Load (kWh, scaled down by a factor of 75)")
-    plt.xlabel("Time (hours)")
-    plt.title(title)
-    plt.savefig(path)
-    plt.clf()
-
-    plt.plot(test_data['Time'], test_data['Load'], label="Actual")
-    plt.plot(test_data['Time'], prediction_sum_hist, label="Predicted")
-    MAPE = mean_absolute_percentage_error(test_data['Load'], prediction_sum_hist)
-    print("Sum hist MAPE Model 3: ", MAPE)
-    plt.legend()
-    title = "Sum of meter forecasts Model 3"
-    path = "Saved_figures/ECC_Nursery_forecasts/" + title.replace(" ", "_")
-    plt.ylabel("Load (kWh, scaled down by a factor of 75)")
-    plt.xlabel("Time (hours)")
-    plt.title(title)
-    plt.savefig(path)
-    plt.clf()
+    # plt.plot(test_data['Time'], test_data['Load'], label="Actual")
+    # plt.plot(test_data['Time'], prediction_sum, label="Predicted")
+    # MAPE = mean_absolute_percentage_error(test_data['Load'], prediction_sum)
+    # print("Sum MAPE Model 1: ", MAPE)
+    # plt.legend()
+    # title = "Sum of meter forecasts Model 1"
+    # path = "Saved_figures/ECC_Nursery_forecasts/" + title.replace(" ", "_")
+    # plt.ylabel("Load (kWh, scaled down by a factor of 75)")
+    # plt.xlabel("Time (hours)")
+    # plt.title(title)
+    # plt.savefig(path)
+    # plt.clf()
+    #
+    # plt.plot(test_data['Time'], test_data['Load'], label="Actual")
+    # plt.plot(test_data['Time'], prediction_sum_multi, label="Predicted")
+    # MAPE = mean_absolute_percentage_error(test_data['Load'], prediction_sum_multi)
+    # print("Sum hist MAPE Model 2: ", MAPE)
+    # plt.legend()
+    # title = "Sum of meter forecasts Model 2"
+    # path = "Saved_figures/ECC_Nursery_forecasts/" + title.replace(" ", "_")
+    # plt.ylabel("Load (kWh, scaled down by a factor of 75)")
+    # plt.xlabel("Time (hours)")
+    # plt.title(title)
+    # plt.savefig(path)
+    # plt.clf()
+    #
+    # plt.plot(test_data['Time'], test_data['Load'], label="Actual")
+    # plt.plot(test_data['Time'], prediction_sum_hist, label="Predicted")
+    # MAPE = mean_absolute_percentage_error(test_data['Load'], prediction_sum_hist)
+    # print("Sum hist MAPE Model 3: ", MAPE)
+    # plt.legend()
+    # title = "Sum of meter forecasts Model 3"
+    # path = "Saved_figures/ECC_Nursery_forecasts/" + title.replace(" ", "_")
+    # plt.ylabel("Load (kWh, scaled down by a factor of 75)")
+    # plt.xlabel("Time (hours)")
+    # plt.title(title)
+    # plt.savefig(path)
+    # plt.clf()
 
     plt.plot(test_data['Time'], test_data['Load'], label="Actual")
     plt.plot(test_data['Time'], prediction_sum_hist_multi, label="Predicted")

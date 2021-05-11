@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.neural_network import MLPRegressor
 from sklearn.metrics import mean_absolute_percentage_error
+from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 
 class ensemble_model_historical_multi:
@@ -11,7 +12,7 @@ class ensemble_model_historical_multi:
         # Initialize the class object
         means = []
         for i in range(48):
-            data_at_time_i = dataframe.loc[dataframe['Timestamp'] == i]
+            data_at_time_i = cluster_dataframe.loc[cluster_dataframe['Timestamp'] == i]
             means.append([i, np.median(data_at_time_i['Temperature']), np.median(data_at_time_i['Load'])])
 
         #Initialise clusters
@@ -34,7 +35,7 @@ class ensemble_model_historical_multi:
 
         time_labels = kmeans.predict(means)
         data_time_labels = []
-        for row in dataframe['Timestamp']:
+        for row in cluster_dataframe['Timestamp']:
             data_time_labels.append(time_labels[int(row)])
         dataframe["Timelabel"] = data_time_labels
         return time_labels, label, cluster_dataframe, dataframe
@@ -46,7 +47,7 @@ class ensemble_model_historical_multi:
             data_label_i = dataframe[dataframe['Timelabel'] == i]
             loads_label_i = data_label_i["Load"]
             model_i = MLPRegressor(hidden_layer_sizes=[5], solver="sgd", activation="tanh", max_iter=1000, learning_rate='constant', learning_rate_init = 0.0005).fit(
-                data_label_i.drop(["Load", "Label", "Timelabel"], axis=1), loads_label_i.values)
+                data_label_i.drop(["Load", "Label", "Timelabel", "Isweekend", "Weekdays"], axis=1), loads_label_i.values)
             models[str(i)] = model_i
         return models
 
@@ -61,6 +62,19 @@ class ensemble_model_historical_multi:
             dataframe[column_name] = historical_data[i]
         dataframe_weekend = dataframe[dataframe["Isweekend"] == 1]
         dataframe = dataframe[dataframe["Isweekend"] == 0]
+        columns = ['Timestamp', "Temperature", "Time", "Weekdays", "prev_1_day_data", "prev_2_day_data", "prev_3_day_data", "prev_4_day_data", "prev_5_day_data", "prev_6_day_data", "prev_7_day_data"]
+        scalers = {}
+        scalers_weekend = {}
+        for column in columns:
+            min_max_scaler = StandardScaler().fit(np.array(dataframe[column]).reshape(-1, 1))
+            min_max_scaler_weekend = StandardScaler().fit(np.array(dataframe_weekend[column]).reshape(-1, 1))
+            dataframe[column] = min_max_scaler.transform(np.array(dataframe[column]).reshape(-1, 1))
+            dataframe_weekend[column] = min_max_scaler_weekend.transform(np.array(dataframe_weekend[column]).reshape(-1, 1))
+            scalers[column] = min_max_scaler
+            scalers_weekend[column] = min_max_scaler_weekend
+        self.scalers = scalers
+        self.scalers_weekend = scalers_weekend
+
         cluster_dataframe = pd.DataFrame(data, columns=["Timestamp", "Temperature", "Time", "Weekdays", "Isweekend", "Load"])
         weekend_cluster_dataframe = cluster_dataframe[cluster_dataframe["Isweekend"] == 1]
         cluster_dataframe = cluster_dataframe[cluster_dataframe["Isweekend"] == 0]
@@ -122,18 +136,26 @@ class ensemble_model_historical_multi:
         prediction = []
         test_data = np.array(test_data)
         test_data = pd.DataFrame(test_data, columns=["Timestamp", "Temperature","Time", "Weekdays", "Isweekend", "Load"])
+
         for i in range(len(historical_test_data)):
             column_name = "prev_" + str(i+1) + "_day_data"
             test_data[column_name] = historical_test_data[i]
+
+        columns = ['Timestamp', "Temperature", "Time", "Weekdays", "prev_1_day_data", "prev_2_day_data",
+                   "prev_3_day_data", "prev_4_day_data", "prev_5_day_data", "prev_6_day_data", "prev_7_day_data"]
+        for column in columns:
+            test_data[test_data["Isweekend"] == 1][column] = self.scalers_weekend[column].transform(np.array(test_data[test_data["Isweekend"] == 1][column]).reshape(-1, 1))
+            test_data[test_data["Isweekend"] == 0][column] = self.scalers[column].transform(np.array(test_data[test_data["Isweekend"] == 0][column]).reshape(-1, 1))
+
         for i in range(len(test_data)):
             if test_data["Isweekend"][i] != 1:
                 label_i = self.time_labels[np.remainder(i,48)]
-                input_data = np.array(test_data.drop('Load', axis=1))  #input_data.reshape(1, -1)
+                input_data = np.array(test_data.drop(['Load', "Weekdays", "Isweekend"], axis=1))  #input_data.reshape(1, -1)
                 prediction_i = self.model[str(label_i)].predict(input_data[i].reshape(1,-1))
                 prediction.extend(prediction_i)
             else:
                 label_i = self.weekend_time_labels[np.remainder(i, 48)]
-                input_data = np.array(test_data.drop('Load', axis=1)) #input_data.reshape(1, -1)
+                input_data = np.array(test_data.drop(['Load', "Weekdays", "Isweekend"], axis=1)) #input_data.reshape(1, -1)
                 prediction_i = self.weekend_models[str(label_i)].predict(input_data[i].reshape(1,-1))
                 prediction.extend(prediction_i)
 
