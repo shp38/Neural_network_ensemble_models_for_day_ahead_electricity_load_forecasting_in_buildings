@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 class ensemble_model_historical_single:
 
     def cluster(self,n_clusters, cluster_dataframe, dataframe):
-        # Initialize the class object
         means = []
         for i in range(48):
             data_at_time_i = dataframe.loc[dataframe['Timestamp'] == i]
@@ -40,7 +39,6 @@ class ensemble_model_historical_single:
 
     def __init__(self, n_clusters, data, historical_data):
 
-        # predict the labels of clusters.
         dataframe = pd.DataFrame(data, columns=["Timestamp", "Temperature", "Time", "Weekdays", "Isweekend", "Load"])
         for i in range(len(historical_data)):
             column_name = "prev_" + str(i+1) + "_day_data"
@@ -69,38 +67,18 @@ class ensemble_model_historical_single:
             data_time_labels.append(time_labels[int(row)])
         dataframe["Timelabel"] = data_time_labels
 
-        # if n_clusters == 48:
-        #     #time_labels = range(0,48)
-        #     for i in range(0,48):
-        #         data_label_i = dataframe.loc[dataframe['Timestamp'] == i]
-        #         loads_label_i = data_label_i["Load"]
-        #         model_i = MLPRegressor(hidden_layer_sizes=[5], solver="sgd", activation="tanh", max_iter=500,
-        #                                learning_rate='constant', learning_rate_init=0.001).fit(
-        #             data_label_i.filter(items=["Timestamp", "Temperature", "Weekdays", "Isweekend"]),
-        #             loads_label_i.values)
-        #         models.append(model_i)
-        #     weekend_model = MLPRegressor(hidden_layer_sizes=[5], solver="sgd", activation="tanh", max_iter=500, learning_rate='constant', learning_rate_init = 0.001).fit(
-        #             dataframe_weekend.filter(items=["Timestamp", "Temperature", "Weekdays", "Isweekend"]), dataframe_weekend.filter(items=["Load"]))
-        #     print(cluster_dataframe[label == 0]["Load"])
-        #else:
 
         for i in u_time_labels:
             data_label_i = dataframe[dataframe['Timelabel'] == i]
             loads_label_i = data_label_i["Load"]
             training_data = data_label_i.drop(["Load", "Label", 'Timelabel'], axis =1).values
-            #filter(items=["Timestamp", "Temperature", "Weekdays","Isweekend"])
             model_i = MLPRegressor(hidden_layer_sizes=[5], solver="sgd", activation="tanh", max_iter=1000, learning_rate='constant', learning_rate_init = 0.0005).fit(
                training_data , loads_label_i.values)
             models[str(i)] = model_i
-        #filter(items=["Timestamp", "Temperature", "Weekdays", "Isweekend"])
         training_data_weekend = dataframe_weekend.drop(["Load"], axis = 1).values
         weekend_model = MLPRegressor(hidden_layer_sizes=[5], solver="sgd", activation="tanh", max_iter=1000, learning_rate='constant', learning_rate_init = 0.0005).fit(
             training_data_weekend , dataframe_weekend.filter(items=["Load"]))
-        # for i in u_time_labels:
-        #     plt.scatter(cluster_dataframe[label == i]["Timestamp"], cluster_dataframe[label == i]["Load"], label=i)
-        # #plt.plot(dataframe['Timestamp'], dataframe['Temperature'], label="Temperature")
-        # plt.legend()
-        # plt.show()
+
 
         self.model = models
         self.n_clusters = n_clusters
@@ -128,11 +106,7 @@ class ensemble_model_historical_single:
                 prediction.extend(prediction_i)
 
         prediction = np.array(prediction)
-        # plt.plot(test_data['Time'], test_data['Load'], label="Actual")
-        # plt.plot(test_data['Time'], prediction, label="Predicted")
-        # #plt.plot(test_data[test_data["Isweekend"] == 1]['Time'], prediction_weekend, label="Predicted Weekend")
-        # plt.legend()
-        # plt.show()
+
 
         MAPE = mean_absolute_percentage_error(test_data['Load'], prediction)
         #print(MAPE)

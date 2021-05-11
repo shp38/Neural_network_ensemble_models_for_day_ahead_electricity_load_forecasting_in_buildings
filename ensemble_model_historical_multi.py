@@ -92,23 +92,7 @@ class ensemble_model_historical_multi:
         models = self.train_models(dataframe, u_time_labels)
         weekend_models = self.train_models(dataframe_weekend, u_weekend_time_labels)
 
-        # for i in u_time_labels:
-        #     data_label_i = dataframe[dataframe['Timelabel'] == i]
-        #     loads_label_i = data_label_i["Load"]
-        #     training_data = data_label_i.drop(["Load", "Label", 'Timelabel'], axis =1).values
-        #     #filter(items=["Timestamp", "Temperature", "Weekdays","Isweekend"])
-        #     model_i = MLPRegressor(hidden_layer_sizes=[5], solver="sgd", activation="tanh", max_iter=500, learning_rate='constant', learning_rate_init = 0.0005).fit(
-        #        training_data , loads_label_i.values)
-        #     models[str(i)] = model_i
-        # #filter(items=["Timestamp", "Temperature", "Weekdays", "Isweekend"])
-        # training_data_weekend = dataframe_weekend.drop(["Load"], axis = 1).values
-        # weekend_model = MLPRegressor(hidden_layer_sizes=[5], solver="sgd", activation="tanh", max_iter=1000, learning_rate='constant', learning_rate_init = 0.0005).fit(
-        #     training_data_weekend , dataframe_weekend.filter(items=["Load"]))
-        # for i in u_time_labels:
-        #     plt.scatter(cluster_dataframe[label == i]["Timestamp"], cluster_dataframe[label == i]["Load"], label=i)
-        # #plt.plot(dataframe['Timestamp'], dataframe['Temperature'], label="Temperature")
-        # plt.legend()
-        # plt.show()
+
 
         self.model = models
         self.n_clusters = n_clusters
@@ -138,11 +122,7 @@ class ensemble_model_historical_multi:
                 prediction.extend(prediction_i)
 
         prediction = np.array(prediction)
-        # plt.plot(test_data['Time'], test_data['Load'], label="Actual")
-        # plt.plot(test_data['Time'], prediction, label="Predicted")
-        # #plt.plot(test_data[test_data["Isweekend"] == 1]['Time'], prediction_weekend, label="Predicted Weekend")
-        # plt.legend()
-        # plt.show()
+
 
         MAPE = mean_absolute_percentage_error(test_data['Load'], prediction)
         #print(MAPE)

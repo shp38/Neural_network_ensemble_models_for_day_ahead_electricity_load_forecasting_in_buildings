@@ -87,38 +87,8 @@ class ensemble_model_multi:
         dataframe['Time'] = time
 
 
-
-
-        # if n_clusters == 48:
-        #     #time_labels = range(0,48)
-        #     for i in range(0,48):
-        #         data_label_i = dataframe.loc[dataframe['Timestamp'] == i]
-        #         loads_label_i = data_label_i["Load"]
-        #         model_i = MLPRegressor(hidden_layer_sizes=[5], solver="sgd", activation="tanh", max_iter=500,
-        #                                learning_rate='constant', learning_rate_init=0.001).fit(
-        #             data_label_i.filter(items=["Timestamp", "Temperature", "Weekdays", "Isweekend"]),
-        #             loads_label_i.values)
-        #         models.append(model_i)
-        #     weekend_model = MLPRegressor(hidden_layer_sizes=[5], solver="sgd", activation="tanh", max_iter=500, learning_rate='constant', learning_rate_init = 0.001).fit(
-        #             dataframe_weekend.filter(items=["Timestamp", "Temperature", "Weekdays", "Isweekend"]), dataframe_weekend.filter(items=["Load"]))
-        #     print(cluster_dataframe[label == 0]["Load"])
-        #else:
-
-
         models = self.train_models(dataframe,u_time_labels)
         weekend_models = self.train_models(dataframe_weekend, u_weekend_time_labels)
-
-        # for i in u_weekend_time_labels:
-        #     weekend_data_label_i = dataframe_weekend[dataframe_weekend['Timelabel'] == i]
-        #     weekend_loads_label_i = weekend_data_label_i["Load"]
-        #     weekend_model_i = MLPRegressor(hidden_layer_sizes=[5], solver="sgd", activation="tanh", max_iter=1000, learning_rate='constant', learning_rate_init = 0.001).fit(
-        #         weekend_data_label_i.filter(items=["Timestamp", "Temperature", "Weekdays", "Isweekend"]), weekend_loads_label_i.values)
-        #     weekend_models[str(i)] = weekend_model_i
-        # for i in u_time_labels:
-        #     plt.scatter(cluster_dataframe[label == i]["Timestamp"], cluster_dataframe[label == i]["Load"], label=i)
-        # #plt.plot(dataframe['Timestamp'], dataframe['Temperature'], label="Temperature")
-        # plt.legend()
-        # plt.show()
 
         self.model = models
         self.n_clusters = n_clusters
@@ -146,13 +116,8 @@ class ensemble_model_multi:
                 prediction.extend(prediction_i)
 
         prediction = np.array(prediction)
-        # plt.plot(test_data['Time'], test_data['Load'], label="Actual")
-        # plt.plot(test_data['Time'], prediction, label="Predicted")
-        # #plt.plot(test_data[test_data["Isweekend"] == 1]['Time'], prediction_weekend, label="Predicted Weekend")
-        # plt.legend()
-        # plt.show()
+
 
         MAPE = mean_absolute_percentage_error(test_data['Load'], prediction)
-        #print(MAPE)
 
         return prediction, MAPE
