@@ -9,15 +9,15 @@ class ensemble_model_multi:
 
     def cluster(self,n_clusters, cluster_dataframe, dataframe):
         # Initialize the class object
-        means = []
+        medians = []
         for i in range(48):
             data_at_time_i = dataframe.loc[dataframe['Timestamp'] == i]
-            means.append([i, np.median(data_at_time_i['Temperature']), np.median(data_at_time_i['Load'])])
+            medians.append([i, np.median(data_at_time_i['Temperature']), np.median(data_at_time_i['Load'])])
 
         #Initialise clusters
         initialisation = []
         for i in range(0, 48, int(48/n_clusters)):
-            initialisation.append(means[i])
+            initialisation.append(medians[i])
         end = True
         while len(initialisation) > n_clusters:
             if end:
@@ -34,7 +34,7 @@ class ensemble_model_multi:
 
 
 
-        time_labels = kmeans.predict(means)
+        time_labels = kmeans.predict(medians)
         data_time_labels = []
         for row in dataframe['Timestamp']:
             data_time_labels.append(time_labels[int(row)])

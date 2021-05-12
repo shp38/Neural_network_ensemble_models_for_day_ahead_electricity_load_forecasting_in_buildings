@@ -8,15 +8,15 @@ import matplotlib.pyplot as plt
 class ensemble_model_historical_single:
 
     def cluster(self,n_clusters, cluster_dataframe, dataframe):
-        means = []
+        medians = []
         for i in range(48):
             data_at_time_i = dataframe.loc[dataframe['Timestamp'] == i]
-            means.append([i, np.median(data_at_time_i['Temperature']), np.median(data_at_time_i['Load'])])
+            medians.append([i, np.median(data_at_time_i['Temperature']), np.median(data_at_time_i['Load'])])
 
         #Initialise clusters
         initialisation = []
         for i in range(0, 48, int(48/n_clusters)):
-            initialisation.append(means[i])
+            initialisation.append(medians[i])
         end = True
         while len(initialisation) > n_clusters:
             if end:
@@ -33,7 +33,7 @@ class ensemble_model_historical_single:
 
 
 
-        time_labels = kmeans.predict(means)
+        time_labels = kmeans.predict(medians)
 
         return time_labels, label, cluster_dataframe, dataframe
 

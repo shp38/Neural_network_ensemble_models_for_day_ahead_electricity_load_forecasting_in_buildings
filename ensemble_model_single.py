@@ -13,16 +13,15 @@ class ensemble_model_single:
     # inputs: number of clusters, a dataframe containing all the data, and a dataframe with some of the irelevant
     #data removed (cluster_dataframe).
     def cluster(self,n_clusters, cluster_dataframe, dataframe):
-        # Initialize the class object
-        means = []
+        medians = []
         for i in range(48):
             data_at_time_i = dataframe.loc[dataframe['Timestamp'] == i]
-            means.append([i, np.median(data_at_time_i['Temperature']), np.median(data_at_time_i['Load'])])
+            medians.append([i, np.median(data_at_time_i['Temperature']), np.median(data_at_time_i['Load'])])
 
         #Initialise clusters
         initialisation = []
         for i in range(0, 48, int(48/n_clusters)):
-            initialisation.append(means[i])
+            initialisation.append(medians[i])
         end = True
         while len(initialisation) > n_clusters:
             if end:
@@ -39,7 +38,7 @@ class ensemble_model_single:
 
 
 
-        time_labels = kmeans.predict(means)
+        time_labels = kmeans.predict(medians)
         data_time_labels = []
         for row in dataframe['Timestamp']:
             data_time_labels.append(time_labels[int(row)])
@@ -65,6 +64,7 @@ class ensemble_model_single:
         dataframe = pd.DataFrame(data, columns=["Timestamp", "Temperature", "Time", "Weekdays", "Isweekend", "Load"])
         #make a separate dataframe containing the weekend data
         dataframe_weekend = dataframe[dataframe["Isweekend"] == 1]
+        #only keep the weekday data in the original dataframe
         dataframe = dataframe[dataframe["Isweekend"] == 0]
         cluster_dataframe = pd.DataFrame(data, columns=["Timestamp", "Temperature", "Time", "Weekdays", "Isweekend", "Load"])
         cluster_dataframe = cluster_dataframe[cluster_dataframe["Isweekend"] == 0]

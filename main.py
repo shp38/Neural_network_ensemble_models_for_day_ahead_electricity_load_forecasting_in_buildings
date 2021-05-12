@@ -19,7 +19,7 @@ from pandas.tseries.holiday import (
     AbstractHolidayCalendar, DateOffset, EasterMonday,
     GoodFriday, Holiday, MO,
     next_monday, next_monday_or_tuesday)
-
+# define bank holidays
 class EnglandAndWalesHolidayCalendar(AbstractHolidayCalendar):
     rules = [
         Holiday('New Years Day', month=1, day=1, observance=next_monday),
@@ -36,7 +36,7 @@ class EnglandAndWalesHolidayCalendar(AbstractHolidayCalendar):
                 month=12, day=26, observance=next_monday_or_tuesday)
     ]
 
-
+#function for finding optimal number of clusters using brute force method.
 def cluster_parametrisation_single(data, validation_data):
     MAPE_optimal = 8
     MAPEs = []
@@ -52,7 +52,7 @@ def cluster_parametrisation_single(data, validation_data):
 
     return best_model, n_clusters_optimal, MAPEs
 
-
+#function for finding optimal number of clusters using brute force method.
 def cluster_parametrisation_multi(data, validation_data):
     MAPE_optimal = 8
     MAPEs = []
@@ -68,7 +68,7 @@ def cluster_parametrisation_multi(data, validation_data):
 
     return best_model, n_clusters_optimal, MAPEs
 
-
+#function for finding optimal number of clusters using brute force method.
 def historical_cluster_parametrisation_single(data, validation_data, historical_data, historical_validation_data):
     MAPE_optimal = 8
     MAPEs = []
@@ -84,6 +84,7 @@ def historical_cluster_parametrisation_single(data, validation_data, historical_
 
     return best_model, n_clusters_optimal, MAPEs
 
+#function for finding optimal number of clusters using brute force method.
 def historical_cluster_parametrisation_multi(data, validation_data, historical_data, historical_validation_data):
     MAPE_optimal = 8
     MAPEs = []
@@ -99,6 +100,7 @@ def historical_cluster_parametrisation_multi(data, validation_data, historical_d
 
     return best_model, n_clusters_optimal, MAPEs
 
+#preprocess_data: convenience function for reading data from a meter folder into a dataframe
 def preprocess_data(load_data_folder, weather_data_file, meter):
 
 
@@ -139,54 +141,57 @@ def preprocess_data(load_data_folder, weather_data_file, meter):
     previous_load_data_6_days = previous_load_data[48:-240].values
     previous_load_data_7_days = previous_load_data[:-288].values
 
+    #time series clustering uncomment if timeseries clustering is of interest
 
+    # ///////////////////////// start of timeseries clustering ///////////////////////////
+    # timeseries_list = []
+    #
+    # for j in range(len(load_data)):
+    #     timeseries_i = []
+    #     timeseries = load_data[j].iloc[:, 1].tolist()
+    #     if j != 0:
+    #         load_previous = load_data[j - 1].iloc[-1, 1].tolist()
+    #     for i in range(len(timeseries)):
+    #         if i == 0:
+    #             if j == 0:
+    #                 load = timeseries[i + 1] - timeseries[i]
+    #             else:
+    #                 load = timeseries[i] - load_previous
+    #         else:
+    #             load = timeseries[i] - timeseries[i - 1]
+    #         timeseries_i.append([i, load])
+    #     timeseries_list.append(timeseries_i)
+    # timeseries_list = np.array(timeseries_list)
+    #
+    # X_train = timeseries_list
+    # # X_train = TimeSeriesScalerMeanVariance().fit_transform(timeseries_list)
+    # sz = X_train.shape[1]
+    # # Soft-DTW-k-means
+    # print("Soft-DTW k-means")
+    # sdtw_km = TimeSeriesKMeans(n_clusters=2,
+    #                            metric="softdtw",
+    #                            metric_params={"gamma": .01}
+    #                            )
+    # y_pred = sdtw_km.fit_predict(X_train)
+    #
+    # for yi in range(2):
+    #     plt.subplot(1, 2, 1+yi)
+    #     for xx in X_train[y_pred == yi]:
+    #         plt.plot(xx.ravel(), "k-", alpha=.2)
+    #     plt.plot(sdtw_km.cluster_centers_[yi].ravel(), "r-")
+    #     plt.xlim(0, sz)
+    #     plt.ylim(0, 5000)
+    #     plt.xlabel("Time of day (half hourly increments)")
+    #     plt.ylabel("Load, kWh")
+    #     plt.text(0.55, 0.85, 'Cluster %d' % (yi + 1),
+    #              transform=plt.gca().transAxes)
+    #
+    # plt.suptitle("Soft-DTW $k$-means load timeseries clustering")
+    #
+    # plt.tight_layout()
+    # plt.show()
+    # //////////////////////// end of timeseries clustering /////////////////////////////////
 
-    timeseries_list = []
-
-    for j in range(len(load_data)):
-        timeseries_i = []
-        timeseries = load_data[j].iloc[:, 1].tolist()
-        if j != 0:
-            load_previous = load_data[j - 1].iloc[-1, 1].tolist()
-        for i in range(len(timeseries)):
-            if i == 0:
-                if j == 0:
-                    load = timeseries[i + 1] - timeseries[i]
-                else:
-                    load = timeseries[i] - load_previous
-            else:
-                load = timeseries[i] - timeseries[i - 1]
-            timeseries_i.append([i, load])
-        timeseries_list.append(timeseries_i)
-    timeseries_list = np.array(timeseries_list)
-
-    X_train = timeseries_list
-    # X_train = TimeSeriesScalerMeanVariance().fit_transform(timeseries_list)
-    sz = X_train.shape[1]
-    # Soft-DTW-k-means
-    print("Soft-DTW k-means")
-    sdtw_km = TimeSeriesKMeans(n_clusters=2,
-                               metric="softdtw",
-                               metric_params={"gamma": .01}
-                               )
-    y_pred = sdtw_km.fit_predict(X_train)
-
-    for yi in range(2):
-        plt.subplot(1, 2, 1+yi)
-        for xx in X_train[y_pred == yi]:
-            plt.plot(xx.ravel(), "k-", alpha=.2)
-        plt.plot(sdtw_km.cluster_centers_[yi].ravel(), "r-")
-        plt.xlim(0, sz)
-        plt.ylim(0, 5000)
-        plt.xlabel("Time of day (half hourly increments)")
-        plt.ylabel("Load, kWh")
-        plt.text(0.55, 0.85, 'Cluster %d' % (yi + 1),
-                 transform=plt.gca().transAxes)
-
-    plt.suptitle("Soft-DTW $k$-means load timeseries clustering")
-
-    plt.tight_layout()
-    plt.show()
     load_data = pd.concat(load_data, ignore_index=True, sort=False)
     load_data['created_at'] = pd.to_datetime(load_data['created_at'], format="%Y-%m-%d %H:%M:%S%z")
     weekdays = load_data['created_at'].dt.dayofweek
@@ -250,6 +255,8 @@ def preprocess_data(load_data_folder, weather_data_file, meter):
 
     return data, test_data, load_data, previous_load_data, previous_load_test_data
 
+
+# preprocess_ecc_main_data: separate function for parsing ecc main meter data due to different format used
 def preprocess_ecc_main_data():
     file = "C:/Users/sebpo/OneDrive/Desktop/University Work/FYP/load_data_directory/OSCE EMLite Single/OSCE ECC Main/ecc-main-forseb.csv"
     weather_data_file = "C:/Users/sebpo/OneDrive/Desktop/University Work/FYP/Historical Weather Data/weather_data.csv"
@@ -336,10 +343,12 @@ def preprocess_ecc_main_data():
 
 
 if __name__ == '__main__':
+    # ignore warnings in order to clean up terminal output.  Disable this line when debugging
     warnings.filterwarnings("ignore")
     weather_data_file = "C:/Users/sebpo/OneDrive/Desktop/University Work/FYP/Historical Weather Data/weather_data.csv"
     load_data_folder = "C:/Users/sebpo/OneDrive/Desktop/University Work/FYP/load_data_directory/OSCE EMLite Single/"
     meters = [  "OSCE ECC Main", "OSCE ECC Cafe", "OSCE Annex Pwr", "OSCE ECC EHeat"] #
+    #initialise array varaiables to the correct shape
     agregate_load_data = np.zeros(7152,)
     agregate_load_data = pd.Series(agregate_load_data)
     agregate_load_historical_data = np.zeros([6144, 7])
@@ -372,6 +381,8 @@ if __name__ == '__main__':
         forecaster_multi, n_clusters_optimal_multi, MAPEs_multi = cluster_parametrisation_multi(data, test_data)
 
         n_clusters = range(1,49,3)
+
+        #Plot MAPE-cluster curves for each model, and save the plots in a folder
 
         print(meter + " Model 1 optimal number of clusters: ",n_clusters_optimal)
         print(meter + " Model 1 best MAPE: ",min(MAPEs))
@@ -450,6 +461,8 @@ if __name__ == '__main__':
     forecaster_hist, n_clusters_optimal_hist, MAPEs_hist = historical_cluster_parametrisation_single(data, test_data, previous_days_load_data, previous_days_load_test_data)
     forecaster_hist_multi, n_clusters_optimal_hist_multi, MAPEs_hist_multi = historical_cluster_parametrisation_multi(data, test_data, previous_days_load_data, previous_days_load_test_data)
 
+    # //////////////Plotting + plot saving into the correct folders/////////////////////
+
     n_clusters = range(1, 49, 3)
 
     plt.plot(n_clusters, MAPEs)
@@ -491,6 +504,7 @@ if __name__ == '__main__':
     #Agregate forecast plots
 
     test_data = pd.DataFrame(test_data, columns=["Timestamp", "Temperature", "Time", "Weekdays", "Isweekend", "Load"])
+
 
     #Model 1
     print("Agregate Model 1 optimal number of clusters: ",n_clusters_optimal)
